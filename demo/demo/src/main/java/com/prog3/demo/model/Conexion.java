@@ -7,49 +7,40 @@ import org.springframework.data.neo4j.core.schema.TargetNode;
 
 @RelationshipProperties
 public class Conexion {
+
     @Id
     @GeneratedValue
-    private Long id; 
+    private Long id;
+
     private double distanciaKm;
     private double tiempoMin;
     private double costo;
 
-
     @TargetNode
     private Lugar destino;
 
-
     public Conexion() {}
-    // getters y setters 
-    public Conexion(Lugar destino, double distanciaKm) {
+
+    public Conexion(Lugar destino, double distanciaKm, double tiempoMin, double costo) {
         this.destino = destino;
         this.distanciaKm = distanciaKm;
+        this.tiempoMin = tiempoMin;
+        this.costo = costo;
     }
 
-    // ✅ getters y setters
-    public Long getId() {
-        return id;
-    }
+    // ✅ Getters y setters completos
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+    public Lugar getDestino() { return destino; }
+    public void setDestino(Lugar destino) { this.destino = destino; }
 
-    public Lugar getDestino() {
-        return destino;
-    }
+    public double getDistanciaKm() { return distanciaKm; }
+    public void setDistanciaKm(double distanciaKm) { this.distanciaKm = distanciaKm; }
 
-    public void setDestino(Lugar destino) {
-        this.destino = destino;
-    }
+    public double getTiempoMin() { return tiempoMin; }
+    public void setTiempoMin(double tiempoMin) { this.tiempoMin = tiempoMin; }
 
-    public double getDistanciaKm() {
-        return distanciaKm;
-    }
-
-    public void setDistanciaKm(double distanciaKm) {
-        this.distanciaKm = distanciaKm;
-    }
-
-
+    public double getCosto() { return costo; }
+    public void setCosto(double costo) { this.costo = costo; }
 }

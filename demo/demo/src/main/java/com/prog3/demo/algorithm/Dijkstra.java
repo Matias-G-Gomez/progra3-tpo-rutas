@@ -24,20 +24,20 @@ public class Dijkstra {
      * @throws IllegalArgumentException si origen o destino no existen en el grafo, 
      *         o si no hay camino entre ellos
      */
-    public static Ruta calcularRuta(Long origenId, Long destinoId, 
-                                    Map<Long, List<ConexionInterna>> grafo, 
-                                    Map<Long, Lugar> todosLosLugares) {
+    public static Ruta calcularRuta(String origenId, String destinoId,
+                                    Map<String, List<ConexionInterna>> grafo,
+                                    Map<String, Lugar> todosLosLugares) {
 
         if (!grafo.containsKey(origenId) || !grafo.containsKey(destinoId)) {
             throw new IllegalArgumentException("Origen o destino no existe en el grafo");
         }
 
-        Map<Long, Double> dist = new HashMap<>();
-        Map<Long, Long> prev = new HashMap<>();
+        Map<String, Double> dist = new HashMap<>();
+        Map<String, String> prev = new HashMap<>();
         PriorityQueue<NodoDistancia> pq = new PriorityQueue<>(Comparator.comparingDouble(nd -> nd.distancia));
 
         // Inicializar distancias
-        for (Long id : grafo.keySet()) {
+        for (String id : grafo.keySet()) {
             dist.put(id, Double.MAX_VALUE);
         }
         dist.put(origenId, 0.0);
@@ -69,7 +69,7 @@ public class Dijkstra {
 
         // Reconstruir ruta
         List<Lugar> rutaLugares = new ArrayList<>();
-        Long u = destinoId;
+        String u = destinoId;
         while (u != null) {
             Lugar lugar = todosLosLugares.getOrDefault(u, new Lugar(u, u.toString()));
             rutaLugares.add(lugar);
@@ -82,20 +82,20 @@ public class Dijkstra {
 
     // Helper interno
     private static class NodoDistancia {
-        Long id;
+        String id;
         double distancia;
-        NodoDistancia(Long id, double distancia) { this.id = id; this.distancia = distancia; }
+        NodoDistancia(String id, double distancia) { this.id = id; this.distancia = distancia; }
     }
 
     // Clase para representar conexiones del grafo
     public static class ConexionInterna {
-        Long destinoId;
+        String destinoId;
         double distancia;
-        public ConexionInterna(Long destinoId, double distancia) { 
+        public ConexionInterna(String destinoId, double distancia) {
             this.destinoId = destinoId; 
             this.distancia = distancia; 
         }
-        public Long getDestinoId() {
+        public String getDestinoId() {
         return destinoId;
         }
 

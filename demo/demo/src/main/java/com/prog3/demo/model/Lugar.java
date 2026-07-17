@@ -10,7 +10,7 @@ import org.springframework.data.neo4j.core.schema.Relationship;
 @Node("Lugar")
 public class Lugar {
     @Id 
-    private Long id;
+    private String id;
     private String nombre;
     private String tipo; // museo, parque, restaurante...
     private double popularidad;
@@ -23,7 +23,7 @@ public class Lugar {
     public Lugar() {}
 
 
-    public Lugar(Long id, String nombre) {
+    public Lugar(String id, String nombre) {
         this.id = id; 
         this.nombre = nombre;
         /*this.tipo=tipo;
@@ -33,8 +33,8 @@ public class Lugar {
     }
 
     // getters y setters
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
 
     public String getNombre() { return nombre; }
     public void setNombre(String nombre) { this.nombre = nombre; }

@@ -1,6 +1,9 @@
 package com.prog3.demo.controller;
 
 
+import com.prog3.demo.dto.BacktrackingResultadoDTO;
+import com.prog3.demo.dto.BranchAndBoundResultadoDTO;
+import com.prog3.demo.dto.DynamicProgrammingResultadoDTO;
 import com.prog3.demo.model.Ruta;
 import com.prog3.demo.model.Usuario;
 import com.prog3.demo.service.PlanificadorRutasService;
@@ -24,10 +27,16 @@ public class RutaController {
 
 
     @GetMapping("/ruta/minima")
-    public Ruta rutaMinima(@RequestParam Long origenId, @RequestParam Long destinoId) {
+    public Ruta rutaMinima(@RequestParam String origenId, @RequestParam String destinoId) {
         return service.calcularRutaMinima(origenId, destinoId);
     }
-    
+
+
+    @GetMapping("/redMinima")
+    public List<String> redMinima() {
+        return service.generarRedMinimaPrim();
+    }
+
 
 
     @PostMapping("/greedy")
@@ -38,24 +47,40 @@ public class RutaController {
 
 
     @PostMapping("/optimizar/dp")
-    public ResponseEntity<Ruta> optimizarDP(@RequestBody OptimizarRequest req) {
-        Ruta r = service.optimizarItinerarioDP(req.usuario, req.lugaresDeseados);
+    public ResponseEntity<DynamicProgrammingResultadoDTO> optimizarDP(@RequestBody OptimizarRequest req) {
+        DynamicProgrammingResultadoDTO r = service.optimizarItinerarioDP(req.usuario, req.lugaresDeseados);
         return ResponseEntity.ok(r);
     }
 
 
+
     @PostMapping("/backtracking")
-    public ResponseEntity<List<Ruta>> backtracking(@RequestBody OptimizarRequest req) {
-        List<Ruta> res = service.generarItinerariosBacktracking(req.usuario, req.lugaresDeseados);
+    public ResponseEntity<BacktrackingResultadoDTO> backtracking(@RequestBody OptimizarRequest req) {
+        BacktrackingResultadoDTO res = service.generarItinerariosBacktracking(req.usuario, req.lugaresDeseados);
         return ResponseEntity.ok(res);
     }
 
 
+
+    // ===== Branch & Bound =====
     @PostMapping("/branchbound")
-    public ResponseEntity<Ruta> branchAndBound(@RequestBody OptimizarRequest req) {
-        Ruta r = service.optimizarBranchAndBound(req.usuario, req.lugaresDeseados);
-        return ResponseEntity.ok(r);
+    public ResponseEntity<BranchAndBoundResultadoDTO> branchAndBound(@RequestBody BranchAndBoundRequest req) {
+        BranchAndBoundResultadoDTO dto = service.optimizarBranchAndBound(
+                req.lugaresDeseados,
+                req.tiempoDisponibleMin,
+                req.presupuestoMax
+        );
+        return ResponseEntity.ok(dto);
     }
+
+    /** Request para Branch & Bound */
+    public static class BranchAndBoundRequest {
+        public List<String> lugaresDeseados;   // ej: ["A","C","E","G"]
+        public double tiempoDisponibleMin;     // ej: 180.0
+        public double presupuestoMax;          // ej: 20.0
+    }
+
+
 
 
     // DTOs internos para requests
