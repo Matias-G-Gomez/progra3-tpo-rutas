@@ -33,3 +33,4 @@ Thumbs.db
 # ---- Variables de entorno / secretos ----
 .env
 application-local.properties
+demo/demo/src/main/resources/application.properties
