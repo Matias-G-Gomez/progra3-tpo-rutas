@@ -2,7 +2,8 @@
 
 Aplicación que modela lugares turísticos de Buenos Aires como un grafo y calcula rutas, redes óptimas e itinerarios con 11 algoritmos clásicos. Tiene un backend en **Java y Spring Boot**, guarda el grafo en **Neo4j** y muestra los resultados en una **interfaz web interactiva** que dibuja cada algoritmo sobre el mapa.
 
-> 🔗 **Demo online:** https://planificador-rutas-036d.onrender.com/
+> 🔗 **Demo online:** [https://planificador-rutas-036d.onrender.com/] (https://planificador-rutas-036d.onrender.com/)
+
 > La demo está en un servidor gratuito: si nadie la usó en un tiempo, la primera carga puede tardar alrededor de un minuto
 >
 > Proyecto desarrollado para la materia Programación 3 (UADE, 2025).
