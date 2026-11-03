@@ -1,0 +1,433 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Planificador de Rutas | Algoritmos sobre grafos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #f6f7f9;
+    --card: #ffffff;
+    --ink: #12233d;
+    --muted: #5a6578;
+    --line: #dce1e8;
+    --edge: #b8c1ce;
+    --accent: #2b59c3;
+    --accent-soft: #e3eaf9;
+    --hit: #e0752d;
+    --hit-soft: #fbe9dc;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: #0e1726;
+      --card: #141f33;
+      --ink: #e8edf5;
+      --muted: #9aa6b8;
+      --line: #24324a;
+      --edge: #3a4a66;
+      --accent: #8aaeff;
+      --accent-soft: #1a2a48;
+      --hit: #f5a05f;
+      --hit-soft: #3a2a1f;
+      color-scheme: dark;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Schibsted Grotesk", ui-sans-serif, system-ui, "Segoe UI", Roboto, Arial, sans-serif;
+  }
+  .wrap { max-width: 1240px; margin: 0 auto; padding: 32px 24px 48px; }
+  header h1 { margin: 0; font-size: 2rem; font-weight: 800; letter-spacing: -0.02em; }
+  header p { margin: 6px 0 0; color: var(--muted); font-size: 1.05rem; }
+  .layout { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 20px; margin-top: 24px; align-items: start; }
+  @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; }
+  .graph-card { position: relative; overflow: hidden; }
+  svg { display: block; width: 100%; height: auto; }
+  .legend { display: flex; flex-wrap: wrap; gap: 16px; padding: 12px 18px; border-top: 1px solid var(--line); font-size: 0.85rem; color: var(--muted); }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  .bar { width: 18px; height: 3px; border-radius: 2px; display: inline-block; }
+
+  .panel { padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+  label { display: block; font-size: 0.85rem; font-weight: 500; color: var(--muted); margin-bottom: 6px; }
+  select, input {
+    width: 100%; padding: 9px 11px; border-radius: 8px; border: 1px solid var(--line);
+    background: var(--paper); color: var(--ink); font: inherit; font-size: 0.95rem;
+  }
+  select:focus, input:focus, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .algo-desc { font-size: 0.9rem; color: var(--muted); line-height: 1.45; margin: 0; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { border: 1px solid var(--line); border-radius: 999px; padding: 5px 10px; font-size: 0.85rem; cursor: pointer; background: transparent; color: var(--ink); font: inherit; }
+  .chip[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+  button.run {
+    border: 0; border-radius: 8px; padding: 11px 14px; background: var(--accent); color: var(--card);
+    font: inherit; font-weight: 700; cursor: pointer; transition: opacity .2s;
+  }
+  button.run:hover { opacity: .9; }
+  button.run:disabled { opacity: .5; cursor: wait; }
+  .result { border-top: 1px solid var(--line); padding-top: 14px; min-height: 80px; }
+  .result h3 { margin: 0 0 8px; font-size: 1rem; }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 8px; margin-bottom: 10px; }
+  .stat { background: var(--paper); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+  .stat b { display: block; font-size: 1.15rem; }
+  .stat small { color: var(--muted); font-size: 0.78rem; }
+  ol, ul { margin: 0; padding-left: 20px; line-height: 1.6; font-size: 0.93rem; }
+  .muted { color: var(--muted); font-size: 0.9rem; margin: 0; }
+  .error { color: #c0392b; font-size: 0.9rem; margin: 0; }
+  @media (prefers-color-scheme: dark) { .error { color: #ff8a80; } }
+  .hidden { display: none; }
+
+  .edge { stroke: var(--edge); stroke-width: 2; transition: stroke .3s, stroke-width .3s, opacity .3s; }
+  .edge.hit { stroke: var(--hit); stroke-width: 4.5; }
+  .edge.dim { opacity: .35; }
+  .edge-label { font-size: 11px; fill: var(--muted); paint-order: stroke; stroke: var(--card); stroke-width: 4px; }
+  .node circle { fill: var(--card); stroke: var(--accent); stroke-width: 2.5; transition: fill .3s, stroke .3s, r .3s; }
+  .node.hit circle { fill: var(--hit); stroke: var(--hit); }
+  .node.dim { opacity: .45; }
+  .node text { font-size: 13px; font-weight: 500; fill: var(--ink); paint-order: stroke; stroke: var(--card); stroke-width: 4px; }
+  .node .nid { font-size: 11px; font-weight: 700; fill: var(--accent); stroke: none; }
+  .node.hit .nid { fill: var(--card); }
+  .order { font-size: 11px; font-weight: 700; fill: var(--card); }
+  .order-bg { fill: var(--ink); }
+  .drawn { stroke-dasharray: 600; stroke-dashoffset: 600; animation: draw .9s ease-out forwards; }
+  @keyframes draw { to { stroke-dashoffset: 0; } }
+  @media (prefers-reduced-motion: reduce) { .drawn { animation: none; stroke-dashoffset: 0; } }
+  footer { margin-top: 20px; color: var(--muted); font-size: 0.85rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Planificador de Rutas</h1>
+    <p>Lugares de Buenos Aires modelados como un grafo en Neo4j. Elegí un algoritmo y miralo resolverse sobre el mapa.</p>
+  </header>
+
+  <div class="layout">
+    <section class="card graph-card" aria-label="Grafo de lugares">
+      <svg id="graph" viewBox="0 0 800 560" role="img" aria-label="Grafo de lugares y conexiones"></svg>
+      <div class="legend">
+        <span><i class="dot" style="background:var(--card);border:2px solid var(--accent)"></i> Lugar</span>
+        <span><i class="bar" style="background:var(--edge)"></i> Conexión (km)</span>
+        <span><i class="dot" style="background:var(--hit)"></i> Resultado del algoritmo</span>
+      </div>
+    </section>
+
+    <aside class="card panel" aria-label="Controles">
+      <div>
+        <label for="algo">Algoritmo</label>
+        <select id="algo">
+          <option value="dijkstra">Dijkstra: camino más corto</option>
+          <option value="bfs">BFS: lugares alcanzables por distancia</option>
+          <option value="saltos">BFS: lugares alcanzables por saltos</option>
+          <option value="dfs">DFS: recorrido en profundidad</option>
+          <option value="prim">Prim: red de conexión mínima</option>
+          <option value="kruskal">Kruskal: red de conexión mínima</option>
+          <option value="greedy">Greedy: ruta por lugares deseados</option>
+          <option value="bb">Branch and Bound: itinerario óptimo</option>
+        </select>
+      </div>
+      <p class="algo-desc" id="desc"></p>
+
+      <div id="f-origen"><label for="origen">Origen</label><select id="origen"></select></div>
+      <div id="f-destino"><label for="destino">Destino</label><select id="destino"></select></div>
+      <div id="f-radio"><label for="radio">Radio (km)</label><input id="radio" type="number" min="0" step="0.5" value="3"></div>
+      <div id="f-saltos"><label for="saltos">Cantidad de saltos</label><input id="saltos" type="number" min="1" step="1" value="2"></div>
+      <div id="f-deseados"><label>Lugares deseados</label><div class="chips" id="deseados"></div></div>
+      <div id="f-bb" class="row">
+        <div><label for="tiempo">Tiempo (min)</label><input id="tiempo" type="number" min="0" step="10" value="300"></div>
+        <div><label for="presupuesto">Presupuesto ($)</label><input id="presupuesto" type="number" min="0" step="1" value="40"></div>
+      </div>
+
+      <button class="run" id="run">Ejecutar</button>
+      <div class="result" id="result" aria-live="polite"><p class="muted">Elegí un algoritmo y tocá Ejecutar.</p></div>
+    </aside>
+  </div>
+
+  <footer>Backend en Java y Spring Boot, datos en Neo4j. Proyecto de Programación 3, UADE.</footer>
+</div>
+
+<script>
+const ALGOS = {
+  dijkstra: { desc: 'Calcula la ruta de menor distancia entre dos lugares.', fields: ['origen', 'destino'] },
+  bfs:      { desc: 'Recorre el grafo por niveles y devuelve los lugares que están dentro de un radio desde el origen.', fields: ['origen', 'radio'] },
+  saltos:   { desc: 'Devuelve los lugares a los que se llega en una cantidad máxima de conexiones desde el origen.', fields: ['origen', 'saltos'] },
+  dfs:      { desc: 'Explora el grafo en profundidad desde el origen. Los números indican el orden de visita.', fields: ['origen'] },
+  prim:     { desc: 'Arma la red que conecta todos los lugares con la menor distancia total, creciendo desde un nodo.', fields: [] },
+  kruskal:  { desc: 'Arma la misma red mínima, ordenando las conexiones y usando Union-Find para evitar ciclos.', fields: [] },
+  greedy:   { desc: 'Desde el origen, va siempre al lugar deseado más cercano hasta visitarlos todos.', fields: ['origen', 'deseados'] },
+  bb:       { desc: 'Elige los lugares deseados que maximizan la popularidad sin pasarse del tiempo ni del presupuesto.', fields: ['deseados', 'bb'] },
+};
+const FIELD_IDS = ['origen', 'destino', 'radio', 'saltos', 'deseados', 'bb'];
+
+let lugares = [];          // [{id, nombre, ...}]
+let edges = [];            // [{a, b, km}]
+let pos = {};              // id -> {x, y}
+const nombre = id => (lugares.find(l => l.id === id) || {}).nombre || id;
+const $ = id => document.getElementById(id);
+const svgNS = 'http://www.w3.org/2000/svg';
+
+async function api(url, options) {
+  const res = await fetch(url, options);
+  if (!res.ok) throw new Error(`El servidor respondió ${res.status}`);
+  return res.json();
+}
+
+// ---------- Carga del grafo ----------
+async function cargar() {
+  try {
+    lugares = await api('/api/lugares');
+  } catch (e) {
+    $('result').innerHTML = `<p class="error">No se pudieron cargar los lugares. ¿Está corriendo la API y la base Neo4j? (${e.message})</p>`;
+    return;
+  }
+  lugares.sort((a, b) => a.id.localeCompare(b.id));
+  const seen = new Set();
+  edges = [];
+  for (const l of lugares) {
+    for (const c of l.conexiones || []) {
+      const d = c.destino && c.destino.id;
+      if (!d) continue;
+      const key = [l.id, d].sort().join('|');
+      if (seen.has(key)) continue;
+      seen.add(key);
+      edges.push({ a: l.id, b: d, km: c.distanciaKm });
+    }
+  }
+  layout();
+  dibujar();
+  llenarControles();
+}
+
+// Distribución de nodos: escalado multidimensional (MDS) sobre las distancias más cortas en km.
+// Así, los lugares que están cerca en la realidad también quedan cerca en el dibujo.
+function layout() {
+  const W = 800, H = 560, n = lugares.length, ids = lugares.map(l => l.id);
+  const idx = Object.fromEntries(ids.map((id, i) => [id, i]));
+  const D = ids.map((_, i) => ids.map((_, j) => (i === j ? 0 : Infinity)));
+  for (const e of edges) {
+    const i = idx[e.a], j = idx[e.b];
+    if (i === undefined || j === undefined) continue;
+    D[i][j] = D[j][i] = Math.min(D[i][j], e.km);
+  }
+  for (let k = 0; k < n; k++) for (let i = 0; i < n; i++) for (let j = 0; j < n; j++)
+    if (D[i][k] + D[k][j] < D[i][j]) D[i][j] = D[i][k] + D[k][j];
+  let max = 0;
+  D.forEach(r => r.forEach(v => { if (isFinite(v)) max = Math.max(max, v); }));
+  const D2 = D.map(r => r.map(v => (isFinite(v) ? v : max * 1.5) ** 2));
+  const rowMean = D2.map(r => r.reduce((s, v) => s + v, 0) / n);
+  const all = rowMean.reduce((s, v) => s + v, 0) / n;
+  const B = D2.map((r, i) => r.map((v, j) => -0.5 * (v - rowMean[i] - rowMean[j] + all)));
+  const eig = (M, ortho) => {
+    let v = ids.map((_, i) => Math.cos(i * 1.7 + (ortho ? 1 : 0)));
+    for (let it = 0; it < 200; it++) {
+      let w = M.map(r => r.reduce((s, x, j) => s + x * v[j], 0));
+      if (ortho) { const d = w.reduce((s, x, i) => s + x * ortho[i], 0); w = w.map((x, i) => x - d * ortho[i]); }
+      const norm = Math.hypot(...w) || 1;
+      v = w.map(x => x / norm);
+    }
+    return v;
+  };
+  const v1 = eig(B), v2 = eig(B, v1);
+  const xs = v1, ys = v2;
+  const pad = { l: 60, r: 170, t: 50, b: 50 };
+  const sx = (W - pad.l - pad.r) / ((Math.max(...xs) - Math.min(...xs)) || 1);
+  const sy = (H - pad.t - pad.b) / ((Math.max(...ys) - Math.min(...ys)) || 1);
+  const pts = ids.map((id, i) => ({
+    x: pad.l + (xs[i] - Math.min(...xs)) * sx,
+    y: pad.t + (ys[i] - Math.min(...ys)) * sy,
+  }));
+  // Separa los lugares que quedaron demasiado juntos, para que no se pisen los nombres
+  const minDist = 150;
+  for (let it = 0; it < 300; it++) {
+    let moved = false;
+    for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) {
+      let dx = pts[j].x - pts[i].x, dy = (pts[j].y - pts[i].y) * 1.6;
+      const d = Math.hypot(dx, dy) || 0.01;
+      if (d < minDist) {
+        const push = (minDist - d) / 2 / d;
+        if (dx === 0 && dy === 0) dx = 1;
+        pts[i].x -= dx * push; pts[j].x += dx * push;
+        pts[i].y -= (dy / 1.6) * push; pts[j].y += (dy / 1.6) * push;
+        moved = true;
+      }
+    }
+    pts.forEach(p => {
+      p.x = Math.min(W - pad.r, Math.max(pad.l, p.x));
+      p.y = Math.min(H - pad.b, Math.max(pad.t, p.y));
+    });
+    if (!moved) break;
+  }
+  // Vuelve a estirar el dibujo para aprovechar todo el espacio disponible
+  const minX = Math.min(...pts.map(p => p.x)), maxX = Math.max(...pts.map(p => p.x));
+  const minY = Math.min(...pts.map(p => p.y)), maxY = Math.max(...pts.map(p => p.y));
+  ids.forEach((id, i) => (pos[id] = {
+    x: pad.l + ((pts[i].x - minX) / ((maxX - minX) || 1)) * (W - pad.l - pad.r),
+    y: pad.t + ((pts[i].y - minY) / ((maxY - minY) || 1)) * (H - pad.t - pad.b),
+  }));
+}
+
+function el(tag, attrs, parent) {
+  const e = document.createElementNS(svgNS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(e);
+  return e;
+}
+
+function dibujar() {
+  const svg = $('graph');
+  svg.innerHTML = '';
+  const gE = el('g', {}, svg), gH = el('g', { id: 'highlights' }, svg), gN = el('g', {}, svg);
+  for (const e of edges) {
+    const a = pos[e.a], b = pos[e.b];
+    el('line', { x1: a.x, y1: a.y, x2: b.x, y2: b.y, class: 'edge', 'data-key': [e.a, e.b].sort().join('|') }, gE);
+    const t = el('text', { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 - 4, class: 'edge-label', 'text-anchor': 'middle' }, gE);
+    t.textContent = `${e.km} km`;
+  }
+  for (const l of lugares) {
+    const p = pos[l.id];
+    const g = el('g', { class: 'node', 'data-id': l.id }, gN);
+    el('circle', { cx: p.x, cy: p.y, r: 16 }, g);
+    const id = el('text', { x: p.x, y: p.y + 4, class: 'nid', 'text-anchor': 'middle' }, g);
+    id.textContent = l.id;
+    const t = el('text', { x: p.x + 22, y: p.y + 5 }, g);
+    t.textContent = l.nombre;
+  }
+}
+
+function limpiar() {
+  document.querySelectorAll('.edge').forEach(e => e.classList.remove('hit', 'dim'));
+  document.querySelectorAll('.node').forEach(n => n.classList.remove('hit', 'dim'));
+  $('highlights').innerHTML = '';
+  document.querySelectorAll('.order-g').forEach(n => n.remove());
+}
+
+function resaltar({ nodos = [], aristas = [], dimRest = true, orden = null }) {
+  limpiar();
+  const ns = new Set(nodos), es = new Set(aristas.map(([a, b]) => [a, b].sort().join('|')));
+  document.querySelectorAll('.node').forEach(n => {
+    const hit = ns.has(n.dataset.id);
+    n.classList.toggle('hit', hit);
+    n.classList.toggle('dim', dimRest && !hit);
+  });
+  document.querySelectorAll('.edge').forEach(e => {
+    const hit = es.has(e.dataset.key);
+    e.classList.toggle('dim', dimRest && !hit);
+  });
+  // Las aristas del resultado se dibujan encima, con animación, en el orden recibido
+  aristas.forEach(([a, b], i) => {
+    if (!pos[a] || !pos[b]) return;
+    const line = el('line', { x1: pos[a].x, y1: pos[a].y, x2: pos[b].x, y2: pos[b].y, class: 'edge hit drawn' }, $('highlights'));
+    line.style.animationDelay = `${i * 0.25}s`;
+  });
+  if (orden) {
+    orden.forEach((id, i) => {
+      const p = pos[id];
+      if (!p) return;
+      const g = el('g', { class: 'order-g' }, $('graph'));
+      el('circle', { cx: p.x - 15, cy: p.y - 15, r: 9, class: 'order-bg' }, g);
+      const t = el('text', { x: p.x - 15, y: p.y - 11.5, class: 'order', 'text-anchor': 'middle' }, g);
+      t.textContent = i + 1;
+    });
+  }
+}
+
+// ---------- Controles ----------
+function llenarControles() {
+  for (const sel of [$('origen'), $('destino')]) {
+    sel.innerHTML = lugares.map(l => `<option value="${l.id}">${l.id} · ${l.nombre}</option>`).join('');
+  }
+  if (lugares.length > 1) $('destino').value = lugares[lugares.length - 1].id;
+  $('deseados').innerHTML = lugares.map(l =>
+    `<button type="button" class="chip" aria-pressed="false" data-id="${l.id}">${l.nombre}</button>`).join('');
+  $('deseados').querySelectorAll('.chip').forEach((c, i) => {
+    if (i % 2 === 0) c.setAttribute('aria-pressed', 'true');
+    c.addEventListener('click', () => c.setAttribute('aria-pressed', c.getAttribute('aria-pressed') === 'true' ? 'false' : 'true'));
+  });
+  actualizarCampos();
+}
+
+function actualizarCampos() {
+  const a = ALGOS[$('algo').value];
+  $('desc').textContent = a.desc;
+  FIELD_IDS.forEach(f => $('f-' + f).classList.toggle('hidden', !a.fields.includes(f)));
+}
+
+const deseados = () => [...$('deseados').querySelectorAll('.chip[aria-pressed="true"]')].map(c => c.dataset.id);
+const caminoAAristas = ids => ids.slice(1).map((id, i) => [ids[i], id]);
+const stat = (valor, texto) => `<div class="stat"><b>${valor}</b><small>${texto}</small></div>`;
+const fmt = n => Number.isInteger(n) ? n : Number(n).toFixed(1);
+
+function parsearRed(lineas) {
+  // Prim: "A --(0.6km)--> B"   Kruskal: "A -- B (0.6 km)"
+  return lineas.map(s => {
+    let m = s.match(/^(\S+)\s+--\((.*?)\)-->\s+(\S+)/);
+    if (m) return { a: m[1], b: m[3], km: parseFloat(m[2]) };
+    m = s.match(/^(\S+)\s+--\s+(\S+)\s+\((.*?)\)/);
+    if (m) return { a: m[1], b: m[2], km: parseFloat(m[3]) };
+    return null;
+  }).filter(Boolean);
+}
+
+async function ejecutar() {
+  const algo = $('algo').value, o = $('origen').value, out = $('result');
+  $('run').disabled = true;
+  out.innerHTML = '<p class="muted">Calculando…</p>';
+  try {
+    if (algo === 'dijkstra') {
+      const r = await api(`/ruta/minima?origenId=${o}&destinoId=${$('destino').value}`);
+      const ids = (r.lugares || []).map(l => l.id);
+      if (!ids.length) throw new Error('No existe un camino entre esos lugares.');
+      resaltar({ nodos: ids, aristas: caminoAAristas(ids) });
+      out.innerHTML = `<h3>Camino más corto</h3><div class="stats">${stat(fmt(r.distanciaTotalKm) + ' km', 'distancia total')}${stat(ids.length - 1, 'conexiones')}</div><ol>${ids.map(i => `<li>${nombre(i)}</li>`).join('')}</ol>`;
+    } else if (algo === 'bfs' || algo === 'saltos') {
+      const url = algo === 'bfs'
+        ? `/api/lugares/alcanzables?origen=${o}&radioKm=${$('radio').value}`
+        : `/api/lugares/alcanzablesPorSaltos?origen=${o}&saltos=${$('saltos').value}`;
+      const r = await api(url);
+      resaltar({ nodos: [o, ...r.map(x => x.id)] });
+      out.innerHTML = `<h3>${r.length} lugares alcanzables desde ${nombre(o)}</h3><ul>${r.map(x => `<li>${x.nombre} <span class="muted">(${fmt(x.distanciaAcumulada)} km)</span></li>`).join('') || '<li>Ninguno</li>'}</ul>`;
+    } else if (algo === 'dfs') {
+      const r = await api(`/api/lugares/dfs?origen=${o}`);
+      const ids = r.map(x => x.id);
+      resaltar({ nodos: ids, orden: ids, dimRest: false });
+      out.innerHTML = `<h3>Orden de visita</h3><ol>${r.map(x => `<li>${x.nombre} <span class="muted">(${x.tipo})</span></li>`).join('')}</ol>`;
+    } else if (algo === 'prim' || algo === 'kruskal') {
+      const r = await api(algo === 'prim' ? '/api/lugares/redMinima' : '/api/lugares/redMinimaKruskal');
+      const red = parsearRed(r);
+      const total = red.reduce((s, e) => s + e.km, 0);
+      resaltar({ nodos: lugares.map(l => l.id), aristas: red.map(e => [e.a, e.b]) });
+      out.innerHTML = `<h3>Red de conexión mínima (${algo === 'prim' ? 'Prim' : 'Kruskal'})</h3><div class="stats">${stat(fmt(total) + ' km', 'distancia total')}${stat(red.length, 'conexiones')}</div><ul>${red.map(e => `<li>${nombre(e.a)} ↔ ${nombre(e.b)} <span class="muted">(${e.km} km)</span></li>`).join('')}</ul>`;
+    } else if (algo === 'greedy') {
+      const r = await api('/greedy', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ origenId: o, lugaresDeseados: deseados() }) });
+      const ids = (r.lugares || []).map(l => l.id);
+      resaltar({ nodos: ids, aristas: caminoAAristas(ids), orden: ids });
+      out.innerHTML = `<h3>Ruta Greedy</h3><div class="stats">${stat(fmt(r.distanciaTotalKm) + ' km', 'distancia total')}${stat(ids.length, 'lugares')}</div><ol>${ids.map(i => `<li>${nombre(i)}</li>`).join('')}</ol>`;
+    } else if (algo === 'bb') {
+      const r = await api('/branchbound', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ lugaresDeseados: deseados(), tiempoDisponibleMin: +$('tiempo').value, presupuestoMax: +$('presupuesto').value }) });
+      const ids = r.lugaresSeleccionados || [];
+      resaltar({ nodos: ids });
+      out.innerHTML = `<h3>Itinerario óptimo</h3><div class="stats">${stat(fmt(r.popularidadTotal), 'popularidad')}${stat(fmt(r.tiempoTotalMin) + ' min', 'tiempo')}${stat('$' + fmt(r.costoTotal), 'costo')}</div><ul>${ids.map(i => `<li>${nombre(i)}</li>`).join('') || '<li>Ningún lugar entra en las restricciones</li>'}</ul>`;
+    }
+  } catch (e) {
+    limpiar();
+    out.innerHTML = `<p class="error">${e.message}</p>`;
+  } finally {
+    $('run').disabled = false;
+  }
+}
+
+$('algo').addEventListener('change', () => { actualizarCampos(); limpiar(); $('result').innerHTML = '<p class="muted">Tocá Ejecutar para ver el resultado.</p>'; });
+$('run').addEventListener('click', ejecutar);
+cargar();
+</script>
+</body>
+</html>

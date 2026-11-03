@@ -5,6 +5,8 @@ import org.springframework.data.neo4j.core.schema.GeneratedValue;
 import org.springframework.data.neo4j.core.schema.RelationshipProperties;
 import org.springframework.data.neo4j.core.schema.TargetNode;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 @RelationshipProperties
 public class Conexion {
 
@@ -17,6 +19,7 @@ public class Conexion {
     private double costo;
 
     @TargetNode
+    @JsonIgnoreProperties("conexiones") // evita el bucle infinito al convertir a JSON
     private Lugar destino;
 
     public Conexion() {}
@@ -28,7 +31,7 @@ public class Conexion {
         this.costo = costo;
     }
 
-    // ✅ Getters y setters completos
+    // Getters y setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
